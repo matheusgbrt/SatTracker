@@ -78,5 +78,16 @@ namespace SatTrack.Services
 
         }
 
+        public async Task<User> UpdateUser(User user, UpdateUserDTO updateUserDTO)
+        {
+            user.Password = passwordService.HashPassword(updateUserDTO.Password);
+            var roles = (await roleService.GetRoleFromNames(updateUserDTO.Roles)).ToList();
+            user.Roles = roles;
+            user.Active = updateUserDTO.Active;
+            elderveilContext.Users.Update(user);
+            await elderveilContext.SaveChangesAsync();
+            return user;
+        }
+
     }
 }

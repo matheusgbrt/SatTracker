@@ -10,5 +10,7 @@ namespace SatTrack.Services.Interfaces
         Task<User> GetUserByNameAsync(string name);
 
         Task<User> CreateUser(CreateUserDTO userDTO);
+
+        Task<User> UpdateUser(User user, UpdateUserDTO updateUserDTO);
     }
 }

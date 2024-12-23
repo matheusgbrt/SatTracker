@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SatTrack.Auth.DTO;
 using SatTrack.DTO;
 using SatTrack.Services.Interfaces;
 using SatTrack.Services;
@@ -27,12 +26,13 @@ namespace SatTrack.Users.Controllers
         }
 
 
-        [HttpPost("createuser")]
+        [HttpPost("create")]
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(object), StatusCodes.Status201Created, Type = typeof(UserDTO))]
         [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorMessageDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
+        [Authorize("ADMIN")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO)
         {
             var user = await _userService.GetUserByNameAsync(createUserDTO.Username);
@@ -48,7 +48,7 @@ namespace SatTrack.Users.Controllers
                 RoleName = x.RoleName
             });
 
-            if (rolesDTO.Except(createUserDTO.Roles, new RoleDTO.RoleDTOEqualityComparer()).Any())
+            if (createUserDTO.Roles.Except(rolesDTO, new RoleDTO.RoleDTOEqualityComparer()).Any())
             {
                 return BadRequest(new ErrorMessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
             }
@@ -56,6 +56,69 @@ namespace SatTrack.Users.Controllers
             user = await _userService.CreateUser(createUserDTO);
 
             return Created();
+
+        }
+
+        [HttpPatch("update")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK, Type = typeof(UserDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorMessageDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
+        [Authorize("ADMIN")]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDTO updateUserDTO)
+        {
+            var user = await _userService.GetUserByNameAsync(updateUserDTO.Username);
+            if (user == null)
+            {
+                return NotFound(new ErrorMessageDTO { Message = "User not found.", Detail = $"A user with the username {updateUserDTO.Username} was not found." });
+            }
+
+            var existingRoles = await _roleService.GetExistingRoles();
+            var rolesDTO = existingRoles.Select(x => new RoleDTO
+            {
+                RoleName = x.RoleName
+            });
+
+            if (updateUserDTO.Roles.Except(rolesDTO, new RoleDTO.RoleDTOEqualityComparer()).Any())
+            {
+                return BadRequest(new ErrorMessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
+            }
+
+            user = await _userService.UpdateUser(user, updateUserDTO);
+            var userDTO = new UserDTO { Active = user.Active, Id = user.UserId, Roles = updateUserDTO.Roles, Username = user.Username };
+            return Ok(userDTO);
+
+        }
+        [HttpGet("allusers")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK, Type = typeof(UserDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorMessageDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
+        [Authorize("ADMIN")]
+        public async Task<IActionResult> GetAllUsers([FromBody] UpdateUserDTO updateUserDTO)
+        {
+            var user = await _userService.GetUserByNameAsync(updateUserDTO.Username);
+            if (user == null)
+            {
+                return NotFound(new ErrorMessageDTO { Message = "User not found.", Detail = $"A user with the username {updateUserDTO.Username} was not found." });
+            }
+
+            var existingRoles = await _roleService.GetExistingRoles();
+            var rolesDTO = existingRoles.Select(x => new RoleDTO
+            {
+                RoleName = x.RoleName
+            });
+
+            if (updateUserDTO.Roles.Except(rolesDTO, new RoleDTO.RoleDTOEqualityComparer()).Any())
+            {
+                return BadRequest(new ErrorMessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
+            }
+
+            user = await _userService.UpdateUser(user, updateUserDTO);
+            var userDTO = new UserDTO { Active = user.Active, Id = user.UserId, Roles = updateUserDTO.Roles, Username = user.Username };
+            return Ok(userDTO);
 
         }
     }
