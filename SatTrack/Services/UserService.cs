@@ -88,6 +88,24 @@ namespace SatTrack.Services
             await elderveilContext.SaveChangesAsync();
             return user;
         }
+        public async Task<int> GetTotalCount()
+        {
+            return await elderveilContext.Users.CountAsync();
+        }
 
+        public async Task<IEnumerable<UserDTO>> GetUserPage(int pageNumber,int pageSize)
+        {
+            var users = await elderveilContext.Users.Include(u => u.Roles).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            return users.Select(user => new UserDTO
+            {
+                Id = user.UserId,
+                Username = user.Username,
+                Active = (bool)user.Active,
+                Roles = user.Roles.Select(r => new RoleDTO
+                {
+                    RoleName = r.RoleName
+                }).ToList()
+            });
+        }
     }
 }

@@ -12,5 +12,7 @@ namespace SatTrack.Services.Interfaces
         Task<User> CreateUser(CreateUserDTO userDTO);
 
         Task<User> UpdateUser(User user, UpdateUserDTO updateUserDTO);
+        Task<int> GetTotalCount();
+        Task<IEnumerable<UserDTO>> GetUserPage(int pageNumber, int pageSize);
     }
 }
