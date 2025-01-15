@@ -24,7 +24,6 @@ namespace SatTrack.Users.Controllers
         [ProducesResponseType(typeof(object), StatusCodes.Status201Created, Type = typeof(UserDTO))]
         [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorMessageDTO))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
-        [Authorize("ADMIN")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO)
         {
             var user = await _userService.GetUserByNameAsync(createUserDTO.Username);

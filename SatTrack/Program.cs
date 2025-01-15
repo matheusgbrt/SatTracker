@@ -1,8 +1,11 @@
 
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SatTrack.Configs;
+using SatTrack.Contracts.Consumers;
 using SatTrack.DAL;
 using SatTrack.Services;
 using SatTrack.Services.Interfaces;
@@ -36,10 +39,15 @@ namespace SatTrack
                 options.UseNpgsql(builder.Configuration.GetConnectionString("ElderveilConnectionString"));
             });
 
+            builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection("RabbitMQ"));
+            builder.Services.Configure<CelestrakSettings>(builder.Configuration.GetSection("CelestrakApi"));
+            builder.Services.AddHttpClient<CelestrakClientService>();
+
             builder.Services.AddScoped<PasswordService>();
             builder.Services.AddScoped<IRoleService,RoleService>();
             builder.Services.AddScoped<IUserService,UserService>();
-
+            builder.Services.AddScoped<ISatGroupService,SatGroupService>();
+            builder.Services.AddScoped<ISatService,SatService>();
             builder.Services.AddAuthorization(options =>
             {
                 foreach(string r in Roles.RoleList)
@@ -47,8 +55,35 @@ namespace SatTrack
                     options.AddPolicy(r, policy => policy.RequireRole(r));
                 }
             });
+
+            builder.Services.AddMassTransit(x =>
+            {
+                x.AddConsumer<GroupMessageConsumer>();
+                x.AddConsumer<SatMessageConsumer>();
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    var rabbitMQSettings = context.GetRequiredService<IConfiguration>().GetSection("RabbitMQ").Get<RabbitMQSettings>();
+                    cfg.Host(rabbitMQSettings.Hostname, h =>
+                    {
+                        h.Username(rabbitMQSettings.Username);
+                        h.Password(rabbitMQSettings.Password);
+                    });
+                    cfg.ConfigureEndpoints(context);
+                    cfg.ReceiveEndpoint("GroupUpdate", e =>
+                    {
+                        e.ConfigureConsumer<GroupMessageConsumer>(context);
+                    });
+                    cfg.ReceiveEndpoint("SatelliteQueue", e =>
+                    {
+                        e.PrefetchCount = 200;
+                        e.ConcurrentMessageLimit = 100;
+                        e.ConfigureConsumer<SatMessageConsumer>(context);
+                    });
+                });
+            });
+
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -81,7 +116,6 @@ namespace SatTrack
             var app = builder.Build();
             app.UseAuthentication();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

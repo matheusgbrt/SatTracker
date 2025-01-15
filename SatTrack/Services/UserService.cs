@@ -5,21 +5,12 @@ using SatTrack.Users.DTO;
 
 namespace SatTrack.Services
 {
-    public class UserService : IUserService
+    public class UserService(ElderveilContext context, PasswordService passwordService, IRoleService roleService) : IUserService
     {
 
-        private readonly ElderveilContext elderveilContext;
-        private readonly PasswordService passwordService;
-        private readonly IRoleService roleService;
-
-        public UserService(ElderveilContext context, PasswordService passwordService, IRoleService roleService)
-        {
-            elderveilContext = context;
-            this.passwordService = passwordService;
-            this.roleService = roleService;
-        }
-
-
+        private readonly ElderveilContext elderveilContext = context;
+        private readonly PasswordService passwordService = passwordService;
+        private readonly IRoleService roleService = roleService;
 
         public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
         {

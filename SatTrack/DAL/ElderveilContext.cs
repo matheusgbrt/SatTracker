@@ -26,6 +26,8 @@ public partial class ElderveilContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
 
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
@@ -40,6 +42,8 @@ public partial class ElderveilContext : DbContext
             entity.HasKey(e => e.SatId).HasName("sats_pk");
 
             entity.Property(e => e.SatId).UseIdentityAlwaysColumn();
+
+            entity.Property(e => e.Epoch).HasColumnType("timestamp without time zone");
 
             entity.HasMany(d => d.SatGroups).WithMany(p => p.Sats)
                 .UsingEntity<Dictionary<string, object>>(
