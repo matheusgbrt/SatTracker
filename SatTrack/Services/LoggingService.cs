@@ -22,7 +22,9 @@ namespace SatTrack.Services
             }
             catch
             {
-
+/*#TODO:
+ Add file logging for very bad errors.
+*/
             }
         }
 

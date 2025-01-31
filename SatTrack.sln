@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SatTrack", "SatTrack\SatTrack.csproj", "{CF1A4652-3796-4425-9A0F-58327FC83D57}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SatTracker", "SatTrack\SatTracker.csproj", "{CF1A4652-3796-4425-9A0F-58327FC83D57}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E9A6CFCC-A137-4A68-8E49-1D8D3E71CB9D}"
 	ProjectSection(SolutionItems) = preProject

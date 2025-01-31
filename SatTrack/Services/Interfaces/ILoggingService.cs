@@ -2,5 +2,7 @@
 {
     public interface ILoggingService
     {
+        void PersistGroupUpdateLog(string message, string groupName, bool isError);
+
     }
 }

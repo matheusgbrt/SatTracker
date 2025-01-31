@@ -8,11 +8,12 @@ using SatTrack.Services.Interfaces;
 
 namespace SatTrack.Contracts.Consumers
 {
-    public class GroupMessageConsumer(ISendEndpointProvider sendEndpointProvider, ISatGroupService groupService,CelestrakClientService celestrakClientService) : IConsumer<SatGroupMessage>
+    public class GroupMessageConsumer(ISendEndpointProvider sendEndpointProvider, ISatGroupService groupService,CelestrakClientService celestrakClientService, ILoggingService loggingService) : IConsumer<SatGroupMessage>
     {
         private ISatGroupService _groupService = groupService;
         private CelestrakClientService _celestrakService = celestrakClientService;
         private readonly ISendEndpointProvider _sendEndpointProvider = sendEndpointProvider;
+        private ILoggingService _loggingService = loggingService;
 
         public async Task Consume(ConsumeContext<SatGroupMessage> context)
         {
@@ -23,7 +24,7 @@ namespace SatTrack.Contracts.Consumers
 
             if (!groupID.HasValue)
             {
-                Console.WriteLine($"Warning: Group ID not found for '{groupName}', skipping processing.");
+                _loggingService.PersistGroupUpdateLog("Group ID not found in Database", groupName, true);
                 return;
             }
 
@@ -37,7 +38,7 @@ namespace SatTrack.Contracts.Consumers
 
                 if (satellites == null || !satellites.Any())
                 {
-                    Console.WriteLine($"Warning: No valid satellites found for group '{groupName}', skipping processing.");
+                    _loggingService.PersistGroupUpdateLog($"No valid satellites found for group '{groupName}'", groupName, true);
                     return;
                 }
 
@@ -45,11 +46,12 @@ namespace SatTrack.Contracts.Consumers
                 {
                     sat.SatGroupID = (int)groupID;
                     await endpoint.Send(sat);
+                    _loggingService.PersistGroupUpdateLog($"Group sent for updates.", groupName, false);
                 }
             }
             catch (JsonException ex)
             {
-                Console.WriteLine($"Error: Failed to deserialize JSON response for group '{groupName}'. Exception: {ex.Message}");
+                _loggingService.PersistGroupUpdateLog($"Failed to deserialize JSON response for group '{groupName}'", groupName, true);
                 return;
             }
 
