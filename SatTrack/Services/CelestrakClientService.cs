@@ -19,12 +19,20 @@ namespace SatTrack.Services
 
         public async Task<string> GetGroupDataAsync(string group)
         {
-            var url = $"{_settings.BaseURL}?GROUP={group}&FORMAT={_settings.Format}";
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var url = $"{_settings.BaseURL}?GROUP={group}&FORMAT={_settings.Format}";
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
-            return content;
+                var content = await response.Content.ReadAsStringAsync();
+                return content;
+            }
+            catch
+            {
+                return "error";
+            }
+
         }
 
     }

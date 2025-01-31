@@ -22,15 +22,16 @@ namespace SatTrack.Users.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(object), StatusCodes.Status201Created, Type = typeof(UserDTO))]
-        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorMessageDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
+        [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(MessageDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(MessageDTO))]
+        [Authorize("ADMIN")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserDTO createUserDTO)
         {
             var user = await _userService.GetUserByNameAsync(createUserDTO.Username);
 
             if (user != null)
             {
-                return Conflict(new ErrorMessageDTO { Detail = "User already registered.", Message = $"A user with the username {createUserDTO.Username} already exists." });
+                return Conflict(new MessageDTO { Detail = "User already registered.", Message = $"A user with the username {createUserDTO.Username} already exists.",Timestamp=DateTime.Now });
             }
 
             var existingRoles = await _roleService.GetExistingRoles();
@@ -41,7 +42,7 @@ namespace SatTrack.Users.Controllers
 
             if (createUserDTO.Roles.Except(rolesDTO, new RoleDTO.RoleDTOEqualityComparer()).Any())
             {
-                return BadRequest(new ErrorMessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
+                return BadRequest(new MessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
             }
 
             user = await _userService.CreateUser(createUserDTO);
@@ -54,15 +55,15 @@ namespace SatTrack.Users.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK, Type = typeof(UserDTO))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorMessageDTO))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorMessageDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(MessageDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(MessageDTO))]
         [Authorize("ADMIN")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserDTO updateUserDTO)
         {
             var user = await _userService.GetUserByNameAsync(updateUserDTO.Username);
             if (user == null)
             {
-                return NotFound(new ErrorMessageDTO { Message = "User not found.", Detail = $"A user with the username {updateUserDTO.Username} was not found." });
+                return NotFound(new MessageDTO { Message = "User not found.", Detail = $"A user with the username {updateUserDTO.Username} was not found.", Timestamp = DateTime.Now });
             }
 
             var existingRoles = await _roleService.GetExistingRoles();
@@ -73,7 +74,7 @@ namespace SatTrack.Users.Controllers
 
             if (updateUserDTO.Roles.Except(rolesDTO, new RoleDTO.RoleDTOEqualityComparer()).Any())
             {
-                return BadRequest(new ErrorMessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist." });
+                return BadRequest(new MessageDTO { Message = "Supplied roles are invalid.", Detail = "One of the supplied roles doesn't exist.", Timestamp = DateTime.Now });
             }
 
             user = await _userService.UpdateUser(user, updateUserDTO);

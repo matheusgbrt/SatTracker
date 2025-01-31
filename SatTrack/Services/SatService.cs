@@ -15,6 +15,11 @@ namespace SatTrack.Services
             return await _context.Sats.AnyAsync(x => x.ObjectName == objectName);
         }
 
+        public async Task<bool> CheckSatExistsByObjectId(string objectId)
+        {
+            return await _context.Sats.AnyAsync(x => x.ObjectId == objectId);
+        }
+
         public async Task<Sat?> GetSatByObjectName(string objectName)
         {
             return await _context.Sats.Include(s => s.SatGroups).Where(sat => sat.ObjectName == objectName).Select(sat => sat).FirstAsync();
@@ -25,7 +30,7 @@ namespace SatTrack.Services
             if (sat == null)
                 throw new ArgumentNullException(nameof(sat));
 
-            if (await CheckSatExistsByObjectName(sat.ObjectName!))
+            if (await CheckSatExistsByObjectId(sat.ObjectId!))
                 return false;
 
             _context.Sats.Add(sat);

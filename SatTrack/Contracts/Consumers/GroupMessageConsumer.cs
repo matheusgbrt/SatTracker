@@ -4,9 +4,7 @@ using SatTrack.Contracts.Messages;
 using SatTrack.Satellites.DTO.SatTrack.DTO;
 using SatTrack.Services;
 using SatTrack.Services.Interfaces;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using static SatTrack.Satellites.Controllers.SatGroupController;
+
 
 namespace SatTrack.Contracts.Consumers
 {
@@ -20,23 +18,39 @@ namespace SatTrack.Contracts.Consumers
         {
             var message = context.Message;
             var groupName = message.groupName;
-            Console.WriteLine($"Received message: groupName ={message.groupName}");
 
             var groupID = await _groupService.GetGroupID(groupName);
 
-            if (groupID.HasValue)
+            if (!groupID.HasValue)
             {
-                var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:SatelliteQueue"));
+                Console.WriteLine($"Warning: Group ID not found for '{groupName}', skipping processing.");
+                return;
+            }
 
-                var satellitesJson = await _celestrakService.GetGroupDataAsync(groupName);
+            var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:SatelliteQueue"));
+
+            try
+            {
+            var satellitesJson = await _celestrakService.GetGroupDataAsync(groupName);
+
                 var satellites = JsonConvert.DeserializeObject<List<SatDTO>>(satellitesJson);
 
-                foreach(SatDTO sat in satellites)
+                if (satellites == null || !satellites.Any())
+                {
+                    Console.WriteLine($"Warning: No valid satellites found for group '{groupName}', skipping processing.");
+                    return;
+                }
+
+                foreach (var sat in satellites)
                 {
                     sat.SatGroupID = (int)groupID;
                     await endpoint.Send(sat);
                 }
-
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Error: Failed to deserialize JSON response for group '{groupName}'. Exception: {ex.Message}");
+                return;
             }
 
             await Task.CompletedTask;

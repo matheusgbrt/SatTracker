@@ -34,14 +34,14 @@ namespace SatTrack.Auth.Controllers
         [Consumes("application/json")]
         [Produces("application/json")]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK, Type = typeof(AuthResultDTO))]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorMessageDTO))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(MessageDTO))]
         public async Task<IActionResult> Login([FromBody] AuthDTO authDTO)
         {
             var user = await _userService.GetUserByNameAsync(authDTO.username);
 
             if (user == null)
             {
-                return Unauthorized(new ErrorMessageDTO { Detail = "Invalid credentials or permission denied.", Message = "Unauthorized access." });
+                return Unauthorized(new MessageDTO { Detail = unauthMessage, Message = "Unauthorized access.",Timestamp = DateTime.Now });
             }
 
             if (_passwordService.VerifyPassword(user.Password, authDTO.password))
@@ -56,7 +56,7 @@ namespace SatTrack.Auth.Controllers
             }
             else
             {
-                return Unauthorized(new ErrorMessageDTO { Detail = "Invalid credentials or permission denied.", Message = "Unauthorized access." });
+                return Unauthorized(new MessageDTO { Detail = unauthMessage, Message = "Unauthorized access.",Timestamp = DateTime.Now });
             }
         }
 

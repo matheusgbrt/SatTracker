@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SatTrack.Contracts.Messages;
+using SatTrack.DTO;
 using SatTrack.Satellites.DTO;
 using SatTrack.Services;
 using SatTrack.Services.Interfaces;
@@ -23,6 +24,10 @@ namespace SatTrack.Satellites.Controllers
         }
 
         [HttpGet("groups")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<GroupDTO>))]
+
         public async Task<IActionResult> GetGroups()
         {
             var groupDTOs = await _groupService.GetAllGroupsDTO();
@@ -30,6 +35,9 @@ namespace SatTrack.Satellites.Controllers
         }
 
         [HttpPost("updategroup")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(MessageDTO))]
         public async Task<IActionResult> UpdateGroup([FromBody, Required] GroupDTO groupDTO)
         {
 
@@ -41,14 +49,19 @@ namespace SatTrack.Satellites.Controllers
             var endpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri("queue:GroupUpdate"));
             await endpoint.Send(new SatGroupMessage(groupDTO.GroupName));
 
-            return Accepted(new
+            return Accepted(new MessageDTO
             {
                 Message = $"Group {groupDTO.GroupName} registered for update.",
+                Detail= "",
                 Timestamp = DateTime.UtcNow
             });
         }
 
         [HttpPost("updateallgroup")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(MessageDTO))]
+
         public async Task<IActionResult> UpdateAllGroups()
         {
 
@@ -61,9 +74,10 @@ namespace SatTrack.Satellites.Controllers
             await endpoint.Send(new SatGroupMessage(dto.groupQuery));
             }
 
-            return Accepted(new
+            return Accepted(new MessageDTO
             {
                 Message = $"{groupDTOs.Count()} Groups registered for update.",
+                Detail = "",
                 Timestamp = DateTime.UtcNow
             });
         }

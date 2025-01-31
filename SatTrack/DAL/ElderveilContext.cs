@@ -18,6 +18,7 @@ public partial class ElderveilContext : DbContext
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Sat> Sats { get; set; }
+    public virtual DbSet<GroupUpdateLog> GroupUpdateLogs { get; set; }
 
     public virtual DbSet<SatGroup> SatGroups { get; set; }
 
@@ -36,6 +37,14 @@ public partial class ElderveilContext : DbContext
 
             entity.Property(e => e.RoleId).UseIdentityAlwaysColumn();
         });
+
+        modelBuilder.Entity<GroupUpdateLog>(entity =>
+        {
+            entity.HasKey(e => e.LogId).HasName("logs_pk");
+            entity.Property(e => e.LogId).UseIdentityAlwaysColumn();
+        });
+
+
 
         modelBuilder.Entity<Sat>(entity =>
         {
@@ -111,4 +120,11 @@ public partial class ElderveilContext : DbContext
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder
+            .LogTo(Console.WriteLine, LogLevel.Error)
+            .EnableSensitiveDataLogging(false);
+    }
 }

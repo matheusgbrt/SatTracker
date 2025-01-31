@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NLog;
+using NLog.Extensions.Logging;
+using NLog.Web;
 using SatTrack.Configs;
 using SatTrack.Contracts.Consumers;
 using SatTrack.DAL;
@@ -19,6 +22,8 @@ namespace SatTrack
 
         public static void Main(string[] args)
         {
+            var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+            logger.Info("Starting up...");
             var builder = WebApplication.CreateBuilder(args);
             appSettingsConfiguration.Initialize(builder.Configuration);
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
@@ -34,10 +39,13 @@ namespace SatTrack
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettingsConfiguration.GetSetting("SecretKey")))
                 };
             });
+
             builder.Services.AddDbContext<ElderveilContext>(options =>
             {
                 options.UseNpgsql(builder.Configuration.GetConnectionString("ElderveilConnectionString"));
+                options.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Error);
             });
+
 
             builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection("RabbitMQ"));
             builder.Services.Configure<CelestrakSettings>(builder.Configuration.GetSection("CelestrakApi"));
@@ -112,7 +120,8 @@ namespace SatTrack
                 }
             });
             });
-
+            builder.Logging.ClearProviders();
+            builder.Host.UseNLog();
             var app = builder.Build();
             app.UseAuthentication();
 
